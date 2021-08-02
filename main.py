@@ -2,7 +2,7 @@ import os
 import hashlib
 import settings
 
-root_folder = 'D:\\test_folder'
+root_folder = settings.root_folder1
 
 
 def AbsPath(*args):
@@ -71,17 +71,23 @@ def GetHashMD5(filename='', string=''):  # get hash from file of string
         return hash_string
 
 
-
-global_hash_id=0
-def CheckSameHashInDictionary(dict, hash):
-    global global_hash_id
+def CheckSameHashInDictionary(dict, hash):  # return hash_id and True if it new hash entry, False if this hash is exists
     for item in dict.items():
         if hash in item[1][0]:
-            result = item[1][1]
+            result = (item[1], False)
             print('hashcheck', result)
             return result
-    global_hash_id += 1
-    return str(global_hash_id)
+        result = (len(dict) + 1, True)
+        return result
+
+
+def WriteNewFolderHashInDict(mydict, hash_id, folder, folder_hash):
+    if folder_hash:
+        if hash_id[1] == True:
+            mydict[hash_id].append((folder_hash, folder))
+        else:
+            mydict.update([(hash_id, [(folder_hash, folder)])])
+    return mydict
 
 
 
@@ -104,8 +110,11 @@ def GetHashFromFoldersList(root_folder):
                         folder_hash = GetHashMD5(string=folder_hash_temp)
                 print('Final:', folder_hash)
                 hash_id = CheckSameHashInDictionary(dictionary_all_folders_hash, folder_hash)
-                dictionary_all_folders_hash[folder] = [folder_hash, hash_id]  #
+                print('hash_id = ', hash_id)
+                WriteNewFolderHashInDict(dictionary_all_folders_hash, hash_id, folder, folder_hash)  #
     print(dictionary_all_folders_hash)
+
+
 
 
 def main():
