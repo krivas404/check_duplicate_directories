@@ -74,52 +74,48 @@ def GetHashMD5(filename='', string=''):  # get hash from file of string
 def CheckSameHashInDictionary(dict, hash):  # return hash_id and True if it new hash entry, False if this hash is exists
     for item in dict.items():
         if hash in item[1][0]:
-            result = (item[1], False)
+            result = (item[0], False)
             print('hashcheck', result)
             return result
-        result = (len(dict) + 1, True)
-        return result
+    result = (len(dict) + 1, True)
+    return result
 
 
-def WriteNewFolderHashInDict(mydict, hash_id, folder, folder_hash):
+def WriteNewFolderHashInDict(mydict, hash_id_with_flag, folder, folder_hash):
     if folder_hash:
-        if hash_id[1] == True:
-            mydict[hash_id].append((folder_hash, folder))
-        else:
-            mydict.update([(hash_id, [(folder_hash, folder)])])
+        if hash_id_with_flag[1] == False:   #if hash and key exists in dict
+            mydict[hash_id_with_flag[0][1]].append(folder) # на доработку
+            print('mydict =', mydict)
+            return mydict
+        mydict.update({hash_id_with_flag[0]: (folder_hash, [folder])})  # if it new hash and key for dict
+        print('mydict =', mydict)
     return mydict
-
 
 
 def GetHashFromFoldersList(root_folder):
     dictionary_all_folders_hash = {}
-    if FoldersInFolder(root_folder):  # take list of folders in directory and check if it empty
-        dir_count = 0  # folders counter
-        for folder in FoldersInFolder(root_folder):  # walk on all folders and take hashes from files inside
+    folders_in_folder = FoldersInFolder(root_folder) # take list of folders in directory
+    if folders_in_folder:  # check if list it empty
+        for folder in folders_in_folder:  # walk on all folders and take hashes from files inside
             if folder:
-                dir_count += 1
                 folder_hash_temp = ''
                 files = FilesInFolder(folder)
                 if files:  # check if have some files in directory or in empty
-                    FileCount = 0
                     for file in files:
-                        FileCount += 1
-                        FileHash = GetHashMD5(filename=file)
-                        folder_hash_temp += FileHash
+                        file_hash = GetHashMD5(filename=file)
+                        folder_hash_temp += file_hash
                         print(folder_hash_temp)
-                        folder_hash = GetHashMD5(string=folder_hash_temp)
-                print('Final:', folder_hash)
-                hash_id = CheckSameHashInDictionary(dictionary_all_folders_hash, folder_hash)
-                print('hash_id = ', hash_id)
-                WriteNewFolderHashInDict(dictionary_all_folders_hash, hash_id, folder, folder_hash)  #
+                folder_hash = GetHashMD5(string=folder_hash_temp)
+                print('Final folder hash:', folder_hash)
+                hash_id_with_flag = CheckSameHashInDictionary(dictionary_all_folders_hash, folder_hash)
+                print('hash_id = ', hash_id_with_flag)
+                WriteNewFolderHashInDict(dictionary_all_folders_hash, hash_id_with_flag, folder, folder_hash)  #
     print(dictionary_all_folders_hash)
-
-
 
 
 def main():
     GetHashFromFoldersList(root_folder)
-
+    print('Final Progrem Return', dictionary_all_folders_hash)
 
 if __name__ == '__main__':
     main()
