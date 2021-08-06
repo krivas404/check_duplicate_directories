@@ -2,8 +2,22 @@ import os
 import hashlib
 import settings
 
-root_folder = settings.root_folder1
+"""Directory=parent_folder, folder=child folder from Directory"""
 
+
+root_folder = settings.root_folder1
+root_folder3 = settings.root_folder3
+all_folders_hash_dict = {}
+
+class MD5(Exception):
+    print("Функция  GetHashMD5() не сработала")
+
+def EmptyCheck(string):  # False if string = 'empty'
+    if not string == 'empty':
+        return True
+    if string == 'empty':
+        return False
+    return True
 
 def AbsPath(*args):
     """
@@ -12,20 +26,20 @@ def AbsPath(*args):
     example: AbsPath(dir1, dir2, dir3, filename) ->
     "rootpath\\dir1\\dir2\\dir3\\filename"
     """
-    abs_path = os.path.join(root_folder, *args)
+    abs_path = os.path.join(*args)
     return abs_path
 
 
-def FoldersInFolder(folder):  # get list of folders from Folder
-    objects = os.walk(folder).__next__()
+def TakeFoldersListFromFolder(my_dir):  # get list of folders from Folder
+    objects = os.walk(my_dir).__next__()
     if objects:
         AbsPathFolders = []
         for folder in objects[1]:
-            AbsPathFolders.append(AbsPath(folder))
+            AbsPathFolders.append(AbsPath(my_dir, folder))
         return AbsPathFolders
 
 
-def FilesInFolder(folder):  # get list of files from Folder
+def TakeFilesListFromFolder(folder, parent_folder=root_folder):  # get list of files from Folder
     objects = os.walk(folder).__next__()
     if objects:
         AbsPathFiles = []
@@ -34,7 +48,7 @@ def FilesInFolder(folder):  # get list of files from Folder
         return AbsPathFiles
 
 
-def WalkOnStringAndDecode(string):
+def TakeHashFromString(string):
     step = 10000  # how many chars slice in a single time
     start = 0
     stop = step
@@ -67,8 +81,9 @@ def GetHashMD5(filename='', string=''):  # get hash from file of string
         file_hash = TakeHashFromFile(filename)
         return file_hash
     if string:
-        hash_string = hashlib.md5(string.encode()).hexdigest()
+        hash_string = TakeHashFromString(string)
         return hash_string
+    return 'empty'  # flag about is entry value is empty (it means about folder has no files and no folders, directory is empty)
 
 
 def CheckSameHashInDictionary(dict, hash):  # return hash_id and True if it new hash entry, False if this hash is exists
@@ -92,28 +107,66 @@ def WriteNewFolderHashInDict(mydict, hash_id_with_flag, folder, folder_hash):
     return mydict
 
 
-def GetHashFromFoldersList(root_folder):
-    dictionary_all_folders_hash = {}
-    folders_in_folder = FoldersInFolder(root_folder) # take list of folders in directory
-    if folders_in_folder:  # check if list it empty
-        for folder in folders_in_folder:  # walk on all folders and take hashes from files inside
-            if folder:
-                folder_hash_temp = ''
-                files = FilesInFolder(folder)
-                if files:  # check if have some files in directory or in empty
-                    for file in files:
-                        file_hash = GetHashMD5(filename=file)
-                        folder_hash_temp += file_hash
-                        print(folder_hash_temp)
-                folder_hash = GetHashMD5(string=folder_hash_temp)
-                print('Final folder hash:', folder_hash)
-                hash_id_with_flag = CheckSameHashInDictionary(dictionary_all_folders_hash, folder_hash)
-                print('hash_id = ', hash_id_with_flag)
-                WriteNewFolderHashInDict(dictionary_all_folders_hash, hash_id_with_flag, folder, folder_hash)  #
-    print('Final Progrem Return', dictionary_all_folders_hash)
-    print('final test :', dictionary_all_folders_hash == {1: ('8f481cede6d2ddc07cb36aa084d9a64d', ['H:\\test_folder\\bar', 'H:\\test_folder\\foo']), 2: ('3dad9cbf9baaa0360c0f2ba372d25716', ['H:\\test_folder\\cda', 'H:\\test_folder\\zfy'])})
+def WriteDirHash(my_dict, my_dir, dir_hash):
+    hash_id_with_flag = CheckSameHashInDictionary(my_dict, dir_hash)
+    WriteNewFolderHashInDict(my_dict, hash_id_with_flag, my_dir, dir_hash)
+
+
+def TakeHashFromFoldersInDirectory(parent_folder):
+    folders_list = TakeFoldersListFromFolder(parent_folder)
+    folders_hash_temp = ''
+    if folders_list:
+        for folder in folders_list:
+            folder_hash = BuildDictionaryFromDirectoryHash(folder)
+            if EmptyCheck(folder_hash):
+                folders_hash_temp += folder_hash
+                print('Folder - folder_hash_temp =', folders_hash_temp)
+        if folders_hash_temp:
+            folders_hash = GetHashMD5(string=folders_hash_temp)
+            print('Folder Folders hash:', folders_hash)
+            return folders_hash
+    return ''
+
+
+def TakeHashFromFilesInDirectory(directory):
+    folder_hash_temp = ''
+    files_list = TakeFilesListFromFolder(directory)
+    if files_list:  # check if have some files in directory or in empty
+        print('folder :', directory)
+        for file in files_list:
+            file_hash = GetHashMD5(filename=file)
+            if EmptyCheck(file_hash):
+                folder_hash_temp += file_hash
+        folder_files_hash = GetHashMD5(string=folder_hash_temp)
+        print('Folder Files hash:', folder_files_hash)
+        return folder_files_hash
+    return ''
+
+
+def TakeAllHashFromDirectory(directory):
+    files_hash = TakeHashFromFilesInDirectory(directory)
+    folders_hash = TakeHashFromFoldersInDirectory(directory)
+    directory_hash_temp = files_hash + folders_hash
+    directory_hash = GetHashMD5(string=directory_hash_temp)
+    return directory_hash
+
+
+def BuildDictionaryFromDirectoryHash(my_dir, my_dict=all_folders_hash_dict):
+    dir_hash = TakeAllHashFromDirectory(my_dir)
+    WriteDirHash(my_dict, my_dir, dir_hash)
+    return dir_hash
+
+
+def DictPrint():
+    print('Starting print dict')
+    for value in all_folders_hash_dict.values():
+        print(value)
+    print('Ending print dict')
+
+
 def main():
-    GetHashFromFoldersList(root_folder)
+    BuildDictionaryFromDirectoryHash(root_folder)
+    DictPrint()
 
 
 if __name__ == '__main__':
