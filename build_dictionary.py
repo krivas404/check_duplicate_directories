@@ -2,6 +2,12 @@ import os
 import hashlib
 
 
+"""
+directory it's parent_folder
+folder it's child folder from directory
+"""
+
+
 all_folders_hash_dict = {}
 
 class MD5(Exception):

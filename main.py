@@ -2,8 +2,6 @@ import settings as sett
 import build_dictionary as build
 import working_with_dict as work
 
-"""Directory=parent_folder, folder=child folder from Directory"""
-
 
 root_folder1 = sett.root_folder1
 root_folder3 = sett.root_folder3
