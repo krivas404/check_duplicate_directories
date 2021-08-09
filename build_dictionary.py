@@ -11,7 +11,7 @@ folder it's child folder from directory
 all_folders_hash_dict = {}
 
 class MD5(Exception):
-    print("Функция  GetHashMD5() не сработала")
+    pass
 
 def EmptyCheck(string):  # False if string = 'empty'
     if not string == 'empty':
@@ -33,16 +33,19 @@ def AbsPath(*args):
 
 def TakeFoldersListFromFolder(my_dir):  # get list of folders from Folder
     objects = os.walk(my_dir).__next__()
-    if objects:
+    if objects[1]:
         AbsPathFolders = []
         for folder in objects[1]:
-            AbsPathFolders.append(AbsPath(my_dir, folder))
+            if not folder.lower() == '$recycle.bin':
+                AbsPathFolders.append(AbsPath(my_dir, folder))
         return AbsPathFolders
 
 
 def TakeFilesListFromFolder(folder):  # get list of files from Folder
+    if os.path.split(folder)[1].lower() == '$recycle.bin'.lower():
+        return []
     objects = os.walk(folder).__next__()
-    if objects:
+    if objects[2]:
         AbsPathFiles = []
         for file in objects[2]:
             AbsPathFiles.append(AbsPath(folder, file))
@@ -152,10 +155,16 @@ def TakeAllHashFromDirectory(directory):
     return directory_hash
 
 
-def BuildDictionaryFromDirectoryHash(my_dir, my_dict=all_folders_hash_dict):
-    dir_hash = TakeAllHashFromDirectory(my_dir)
-    WriteDirHash(my_dict, my_dir, dir_hash)
-    return dir_hash
+def BuildDictionaryFromDirectoryHash(root, my_dict=all_folders_hash_dict):
+    if type(root) == str:
+            dir_hash = TakeAllHashFromDirectory(root)
+            WriteDirHash(my_dict, root, dir_hash)
+            return dir_hash
+    if type(root) == list:
+        print(f'root{root} c')
+        for folder in root:
+            BuildDictionaryFromDirectoryHash(folder)
+
 
 
 def DictPrint():
@@ -165,8 +174,8 @@ def DictPrint():
     print('Ending print dict')
 
 
-def main(root_folder):
-    BuildDictionaryFromDirectoryHash(root_folder)
+def main(root):
+    BuildDictionaryFromDirectoryHash(root)
     DictPrint()
     return all_folders_hash_dict
 
